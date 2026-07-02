@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BanEcuador - Simulador de Amortización Profesional</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficos avanzados -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome para iconografía corporativa -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        /* Scrollbar personalizado para tablas de datos */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-[#f8fafc] text-slate-900 min-h-screen flex flex-col justify-between">
+
+    <!-- Header Corporativo / Panel de Control Superior -->
+    <header class="bg-emerald-950 text-white shadow-xl border-b border-emerald-800 sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-gradient-to-tr from-emerald-500 to-teal-600 p-2.5 rounded-xl shadow-md shadow-emerald-500/20">
+                    <i class="fa-solid fa-landmark text-xl text-white"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-extrabold tracking-tight flex items-center gap-2">
+                        BanEcuador <span class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2.5 py-0.5 rounded-full border border-emerald-500/30 uppercase tracking-wider font-semibold">Simulador v3.0</span>
+                    </h1>
+                    <p class="text-[10px] text-slate-300 font-medium">Analítica avanzada de crédito, amortización y educación financiera</p>
+                </div>
+            </div>
+            <!-- Selector de Activo / Atajo rápido -->
+            <div class="flex items-center gap-2 bg-emerald-900 px-3 py-1.5 rounded-xl border border-emerald-800 text-xs text-slate-300">
+                <span class="font-bold text-slate-300">Activo sugerido:</span>
+                <select id="preset-activo" onchange="aplicarPresetActivo()" class="bg-transparent border-none text-yellow-400 font-bold focus:ring-0 cursor-pointer">
+                    <option value="vehiculo">🚗 Auto Joven ($15,000 | 12.5% | 48m)</option>
+                    <option value="estudios">🎓 Crédito Educativo ($8,000 | 8.5% | 36m)</option>
+                    <option value="vivienda">🏡 Vivienda Inicial ($85,000 | 7.2% | 120m)</option>
+                    <option value="emprende">🚀 Emprendimiento ($5,000 | 14.0% | 24m)</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- Dashboard Principal -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8 flex-1 w-full space-y-8">
+        
+        <!-- Grid de Controles y KPIs de Entrada -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+            
+            <!-- Columna de Entradas Financieras (4/12) -->
+            <div class="lg:col-span-4 bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-6">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-sliders text-emerald-600"></i> Estructurar Crédito
+                    </h3>
+                    <p class="text-xs text-slate-500 mt-0.5">Modifique los parámetros para recalcular el escenario instantáneamente.</p>
+                </div>
+
+                <form id="pro-form" class="space-y-4" onsubmit="event.preventDefault(); calcularAmortizacionPro();">
+                    
+                    <!-- Nombre del Bien o Activo -->
+                    <div class="space-y-1.5">
+                        <label for="inp-nombre-bien" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Nombre del Bien / Activo</label>
+                        <div class="flex gap-2">
+                            <span class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center text-slate-500">
+                                <i class="fa-solid fa-tag text-emerald-600"></i>
+                            </span>
+                            <input type="text" id="inp-nombre-bien" value="Auto Joven" oninput="calcularAmortizacionPro()"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                                placeholder="Ej. Computadora, Bicicleta, Instrumento">
+                        </div>
+                    </div>
+
+                    <!-- Monto del Préstamo -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="inp-monto" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Monto del Préstamo</label>
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded" id="lbl-monto">--</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center text-slate-500">$</span>
+                            <input type="number" id="inp-monto" value="15000" min="500" max="1000000" step="500"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                                oninput="syncForm('inp-monto', 'rng-monto')">
+                        </div>
+                        <input type="range" id="rng-monto" min="1000" max="150000" step="1000" value="15000" 
+                            class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                            oninput="syncForm('rng-monto', 'inp-monto')">
+                    </div>
+
+                    <!-- Tasa de Interés -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="inp-tasa" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Tasa Anual Nominal (T.N.A.)</label>
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded" id="lbl-tasa">--</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <span class="bg-slate-100 border border-slate-200 rounded-lg px-3 py-2 text-xs font-bold flex items-center text-slate-500">%</span>
+                            <input type="number" id="inp-tasa" value="12.5" min="0" max="50" step="0.1"
+                                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs font-bold text-slate-900 focus:ring-1 focus:ring-emerald-500 focus:outline-none"
+                                oninput="syncForm('inp-tasa', 'rng-tasa')">
+                        </div>
+                        <input type="range" id="rng-tasa" min="1" max="30" step="0.1" value="12.5" 
+                            class="w-full h-1 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-emerald-600"
+                            oninput="syncForm('rng-tasa', 'inp-tasa')">
+                    </div>
+
+                    <!-- Plazo de Pago -->
+                    <div class="space-y-1.5">
+                        <div class="flex justify-between items-center">
+                            <label for="inp-plazo" class="text-xs font-bold text-slate-700 uppercase tracking-wide">Plazo Financiero</label>
+                            <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded" id="lbl-plazo">--</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <input type="number" id="inp-plazo" value="48" min="
